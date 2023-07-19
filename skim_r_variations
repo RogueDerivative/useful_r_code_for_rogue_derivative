@@ -1,0 +1,16 @@
+### select some columns in the output
+record_status_skim <- df %>% 
+  select(record_status, upc_ean, ssic, pos_flags_id, gl_number, nielsen_category_id) %>%
+  filter(!is.na(record_status)) %>% 
+  group_by(record_status) %>% 
+  skim_without_charts()%>%
+  select(-c(character.empty, character.whitespace, skim_type))
+### round column values
+record_status_skim <- record_status_skim %>%
+  mutate(complete_rate = round(complete_rate, 3))
+# the breakdown of the 5 selected columns by record status excluding missing record_status
+### convert from integer values to character strings
+record_status_skim <- record_status_skim %>%
+  mutate(record_status = case_when(record_status == "1" ~ "add",
+                                   record_status == "2" ~ "change",
+                                   record_status == "3" ~ "delete"))
