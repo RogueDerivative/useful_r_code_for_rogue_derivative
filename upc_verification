@@ -1,0 +1,23 @@
+### upc GTIN-14 validation
+upc_str_len <- df %>%
+  select(item_id, upc_ean) %>%
+  mutate(string_length = str_length(upc_ean)) %>%
+  group_by(string_length) %>%
+  summarise(n = n())
+### find the 14 character upc_ean values
+upc_eans <- df %>%
+  filter(str_length(upc_ean) == 14) %>%
+  select(upc_ean) %>%
+  distinct()
+### split the string 
+upc_eans[,2:15] <- str_split_fixed(upc_eans$upc_ean,"",n=14) 
+### convert upc_ean to factor and other cols to nums 
+upc_eans <- upc_eans %>%
+  mutate(upc_ean = as_factor(upc_ean)) %>%
+  mutate_if(is.character, as.numeric)
+### validate upc_ean_len_14 
+upc_eans <- upc_eans %>%
+  mutate(upc_ean_value = 3*V1 + V2 + 3*V3 + V4 + 3*V5 + V6 + 3*V7 + V8 + 3*V9 + V10 + 3*V11 + V12 + 3*V13, .keep = "unused") %>%
+  mutate("mod_10" = upc_ean_value %% 10) %>%
+  mutate("valid_upc" = mod_10 == V14) %>%
+  select(-c(V14, upc_ean_value, mod_10))
