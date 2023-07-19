@@ -1,0 +1,38 @@
+# title ----
+title <- df %>%
+  select(ticket_id, title)
+### unnest all the words 
+tidy_title <- title %>%
+  select(title) %>%
+  unnest_tokens(word, title) %>%
+  anti_join(stop_words) 
+### table of counts
+word_count <- tidy_title %>%
+   count(word, sort = TRUE)
+### remove identified unnecessary prepends -----
+title_first_two_words <- title %>%
+  mutate(lead_words = str_to_lower(title)) %>%
+  mutate(lead_words = str_replace_all(lead_words, "[:digit:]+\\s|\\s[:digit:]+", "")) %>%
+  mutate(lead_words = str_remove_all(lead_words, "[:punct:]")) %>%
+  mutate(lead_words = str_squish(lead_words)) %>%
+  mutate(lead_words = word(lead_words, 1, 2, sep = "\\s")) # select the first two words
+### count the two words selected 
+lead_words_count <- title_first_two_words %>%
+  group_by(lead_words) %>%
+  count(lead_words, sort = TRUE)
+### Boolean the two important words, then build a new factor off those identified Boolean values
+title_factors <- title_first_two_words %>%
+  mutate(is_wc = str_detect(lead_words, "^(wc)")) %>%
+  mutate(is_phq = str_detect(lead_words, "^(phq)")) %>%
+  mutate(is_store_on = str_detect(lead_words, "^(store onboarding)")) %>%
+  mutate(is_process = str_detect(lead_words, "^(process description)")) %>%
+  mutate(is_brfc = str_detect(lead_words, "^(brfc)")) %>%
+  mutate(is_rtsma = str_detect(lead_words, "^(rtsma)")) %>%
+  mutate(title_factor = case_when(is_wc == TRUE ~ "wc",
+                                  is_phq == TRUE ~ "phq",
+                                  is_store_on == TRUE ~ "onboard",
+                                  is_process == TRUE ~ "process",
+                                  is_brfc == TRUE ~ "brfc",
+                                  is_rtsma == TRUE ~ "rtsma",
+                                  .default = "other")) %>%
+  select(-c(is_wc, is_phq, is_store_on, is_process, is_brfc, is_rtsma))
