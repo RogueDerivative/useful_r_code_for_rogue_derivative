@@ -1,0 +1,19 @@
+# separate lines by new_line character
+description_split <- dat %>%
+  group_by(ticket_id) %>%
+  separate_rows(description, sep = "\\n") %>%
+  as_tibble()
+### add a new identifier to keep sentences together
+description_split <- description_split %>%
+  mutate(linenumber = as.character(row_number()), .before = ticket_id)
+### remove all lines with only a carriage return
+description_split <- description_split %>%
+  mutate(description = str_replace_all(description, "\r", "")) %>%
+  mutate(description = str_squish(description)) %>% # remove excess whitespace
+  mutate(len = str_length(description)) %>%
+  filter(len != 0) # remove empty rows
+### grab the distinct rows
+df <- description_split %>%
+  group_by(ticket_id) %>%
+  distinct(description) %>%
+  ungroup()
