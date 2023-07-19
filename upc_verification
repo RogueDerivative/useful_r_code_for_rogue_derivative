@@ -1,3 +1,7 @@
+# upc ----
+### find all unique item_id without an associated upc value
+empty_upc <- df %>%
+  filter(is.na(upc_ean))
 ### upc GTIN-14 validation
 upc_str_len <- df %>%
   select(item_id, upc_ean) %>%
